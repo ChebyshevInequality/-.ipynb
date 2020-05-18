@@ -1,0 +1,116 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
+from IPython.display import HTML
+import numpy as np
+plt.rcParams['font.sans-serif'] = ['Microsoft JhengHei'] #中文字型
+
+df = pd.read_csv('https://quality.data.gov.tw/dq_download_csv.php?nid=46781&md5_url=19e0a75096621cc0a930a7e5c74aeece')
+df = df.dropna() # 把nan 無資料去掉
+df.groupby("年度").head(10)
+
+
+
+
+basic = df[df['年度']=='101'].sort_values('小計').tail(10)
+fig, ax = plt.subplots(figsize=(15,6)) # 在同一個視窗繪製多個圖表
+ax.barh(basic['科別'], basic['小計']) #繪製水平條形圖
+
+
+
+
+
+
+
+
+colors = dict(zip(
+    ["華文教師科", "文史藝術科", "實用華語科", "商業及管理科", "家庭與兒童科", "餐飲科",'電腦資訊科','中小學進修科','總計','農工科'],
+    ["#F24236","#E9D985", "#8C4843", "#90d595", "#e48381", "#090446","#e48381", "#aafbff",'#746D75',"#424B54"]
+))
+
+
+fig, ax = plt.subplots(figsize=(16, 9)) # 在同一個視窗繪製多個圖表
+ax.clear() #把之前的直條圖清空
+def race_barchart(input_year):
+    dff = df[df['年度'].eq(input_year)].sort_values(by='小計', ascending=True).tail(10)
+    ax.clear() #把之前的直條圖清空
+    ax.set_yticks([]) #清除y轴原本刻度  
+    ax.barh(dff['科別'], dff['小計'], color=[colors[x] for x in dff['科別']],height=0.8)
+    dx = dff['小計'].max() / 200
+    
+    for i, (value, name) in enumerate(zip(dff['小計'], dff['科別'])):
+        ax.text(0, i,name+' ',size=16, weight=600, ha='right', va='center') # 圖左依照順序標示name
+        ax.text(value+dx, i,f'{value:,.0f}',  size=16, ha='left',  va='center')# 圖右依照value+dx的距離標示value
+        print(i, value, name)    
+
+  
+race_barchart('105')
+
+
+
+
+
+
+fig, ax = plt.subplots(figsize=(16, 9)) # 在同一個視窗繪製多個圖表
+
+def race_barchart(input_year):
+    dff = df[df['年度'].eq(input_year)].sort_values(by='小計', ascending=True).tail(10)
+    ax.clear() #把之前的直條圖清空
+
+    ax.barh(dff['科別'], dff['小計'], color=[colors[x] for x in dff['科別']],height=0.8)
+    dx = dff['小計'].max() / 200
+    
+    for i, (value, name) in enumerate(zip(dff['小計'], dff['科別'])):
+        ax.text(0, i,name+' ',size=16, weight=600, ha='right', va='center')
+        ax.text(value+dx, i,f'{value:,.0f}',  size=16, ha='left',  va='center')
+        
+    
+    #右邊大文字標示(年月)        
+    ax.text(0.9, 0.2, input_year[:7].replace('-','/'), 
+            transform=ax.transAxes, color='#777777', size=72, ha='right', weight=1000)
+    
+    #左上方小文字標示-人數 
+    ax.text(0, 1.06, '人數 ', transform=ax.transAxes, size=14, color='#777777')
+    
+    #右邊小文字標示(總人數)
+    ax.text(0.59, 0.14, '總人數:'+str(int(dff['小計'].sum())), 
+            transform=ax.transAxes, size=24, color='#000000',ha='left')
+    
+    #x軸座標改灰色
+    ax.tick_params(axis='x', colors='#777777', labelsize=12)
+    
+    #x軸座標改至上方
+    ax.xaxis.set_ticks_position('top') 
+    ax.set_yticks([]) #清除y轴原本刻度
+    ax.margins(0, 0.01) #x轴刻度靠近第一個 bar
+    ax.grid(which='major', axis='x', linestyle='-') #格線樣式
+    
+   
+    ax.text(0, 1.15, '歷年中華函授學校學生入學人次',
+                transform=ax.transAxes, size=24, weight=600, ha='left', va='top')
+
+    plt.box(False) 
+    
+race_barchart('105')
+
+
+
+
+  
+
+    
+  from matplotlib.animation import FuncAnimation
+year = list(set(df.年度.values))
+year.sort()
+
+fig, ax = plt.subplots(figsize=(16, 9))
+animator = animation.FuncAnimation(fig, race_barchart, frames=year)
+HTML(animator.to_jshtml())
+
+
+
+
+
+animator.save('歷年中華函授學校學生入學人次─按修習科別及地區別.gif', writer='pillow')
+
+
